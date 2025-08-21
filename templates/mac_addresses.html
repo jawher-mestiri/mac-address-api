@@ -25,9 +25,23 @@
             padding: 5px 8px;
             border-radius: 5px;
             font-family: monospace;
+            margin-right: 4px;
         }
         .search-box {
-            max-width: 300px;
+            max-width: 350px;
+        }
+        mark {
+            background-color: #ffeb3b;
+            padding: 0;
+            border-radius: 3px;
+        }
+        /* Make header sticky for long tables */
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background-color: #343a40;
+            color: white;
         }
     </style>
 </head>
@@ -39,7 +53,7 @@
         </div>
 
         <!-- Search -->
-        <input id="searchInput" type="text" class="form-control mb-4 search-box" placeholder="Search VM Name...">
+        <input id="searchInput" type="text" class="form-control mb-4 search-box" placeholder="Search VM name, ID, or MAC address...">
 
         <div class="card p-3">
             <div class="table-responsive">
@@ -74,19 +88,48 @@
     </div>
 
     <script>
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('vmTable');
+
+        function highlightMatches(text, filter) {
+            if (!filter) return text;
+            const regex = new RegExp(`(${filter})`, "gi");
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = tableBody.querySelectorAll("tr");
+
+            rows.forEach(row => {
+                const nameCell = row.cells[0];
+                const idCell = row.cells[1];
+                const macCell = row.cells[2];
+
+                const vmName = nameCell.textContent.toLowerCase();
+                const vmId = idCell.textContent.toLowerCase();
+                const macAddresses = macCell.textContent.toLowerCase();
+
+                // Check if search term matches any column
+                const isMatch = vmName.includes(filter) || vmId.includes(filter) || macAddresses.includes(filter);
+
+                if (isMatch) {
+                    row.style.display = "";
+                    nameCell.innerHTML = highlightMatches(nameCell.textContent, filter);
+                    idCell.innerHTML = highlightMatches(idCell.textContent, filter);
+                    macCell.innerHTML = highlightMatches(macCell.textContent, filter);
+                } else {
+                    row.style.display = "none";
+                    nameCell.innerHTML = nameCell.textContent;
+                    idCell.innerHTML = idCell.textContent;
+                    macCell.innerHTML = macCell.textContent;
+                }
+            });
+        });
+
         // Dark Mode Toggle
         document.getElementById('darkModeBtn').addEventListener('click', function() {
             document.body.classList.toggle('dark-mode');
-        });
-
-        // Search Filter
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            let filter = this.value.toLowerCase();
-            let rows = document.querySelectorAll("#vmTable tr");
-            rows.forEach(row => {
-                let vmName = row.cells[0].textContent.toLowerCase();
-                row.style.display = vmName.includes(filter) ? "" : "none";
-            });
         });
     </script>
 </body>
