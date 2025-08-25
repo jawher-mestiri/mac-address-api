@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VM MAC Addresses</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark-mode {
+            background-color: #121212;
+            color: #f8f9fa;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .mac-badge {
+            background-color: #007bff;
+            color: white;
+            padding: 5px 8px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-right: 4px;
+            display: inline-block;
+        }
+        .adapter-badge {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 8px;
+            border-radius: 5px;
+            margin-right: 4px;
+            display: inline-block;
+            font-weight: 500;
+        }
+        .search-box {
+            max-width: 350px;
+        }
+        mark {
+            background-color: #ffeb3b;
+            padding: 0;
+            border-radius: 3px;
+        }
+        /* Sticky header for large tables */
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background-color: #343a40;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>VM MAC Addresses</h2>
+            <button id="darkModeBtn" class="btn btn-outline-secondary btn-sm">Dark Mode</button>
+        </div>
+
+        <!-- Search -->
+        <input id="searchInput" type="text" class="form-control mb-4 search-box" placeholder="Search VM name, ID, adapter, or MAC address...">
+
+        <div class="card p-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>VM Name</th>
+                            <th>VM ID</th>
+                            <th>Port Adapters</th>
+                            <th>MAC Addresses</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vmTable">
+                        {% for vm in vms %}
+                        <tr>
+                            <td>{{ vm.vm_name }}</td>
+                            <td>{{ vm.vm_id }}</td>
+                            <td>
+                                {% if vm.adapters %}
+                                    {% for adapter in vm.adapters %}
+                                        <span class="adapter-badge">{{ adapter }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <em>No Adapters</em>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if vm.mac_addresses %}
+                                    {% for mac in vm.mac_addresses %}
+                                        <span class="mac-badge">{{ mac }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <em>No MAC addresses</em>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('vmTable');
+
+        function highlightMatches(text, filter) {
+            if (!filter) return text;
+            const regex = new RegExp(`(${filter})`, "gi");
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = tableBody.querySelectorAll("tr");
+
+            rows.forEach(row => {
+                const nameCell = row.cells[0];
+                const idCell = row.cells[1];
+                const adapterCell = row.cells[2];
+                const macCell = row.cells[3];
+
+                const vmName = nameCell.textContent.toLowerCase();
+                const vmId = idCell.textContent.toLowerCase();
+                const adapters = adapterCell.textContent.toLowerCase();
+                const macAddresses = macCell.textContent.toLowerCase();
+
+                const isMatch = vmName.includes(filter) || vmId.includes(filter) || adapters.includes(filter) || macAddresses.includes(filter);
+
+                if (isMatch) {
+                    row.style.display = "";
+                    nameCell.innerHTML = highlightMatches(nameCell.textContent, filter);
+                    idCell.innerHTML = highlightMatches(idCell.textContent, filter);
+                    adapterCell.innerHTML = highlightMatches(adapterCell.textContent, filter);
+                    macCell.innerHTML = highlightMatches(macCell.textContent, filter);
+                } else {
+                    row.style.display = "none";
+                    nameCell.innerHTML = nameCell.textContent;
+                    idCell.innerHTML = idCell.textContent;
+                    adapterCell.innerHTML = adapterCell.textContent;
+                    macCell.innerHTML = macCell.textContent;
+                }
+            });
+        });
+
+        // Dark Mode Toggle
+        document.getElementById('darkModeBtn').addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+        });
+    </script>
+</body>
+</html>
